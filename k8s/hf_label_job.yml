@@ -1,0 +1,109 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: bking2-hf-label-job-nc-latent-tod-
+  labels:
+    user: bking2
+    k8s-app: bking2-debug
+spec:
+  template:
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values:
+                - notarealnode.sdsc.optiputer.net
+      containers:
+      - name: bking2-nc-latent-tod
+        image: kingb12/nc_latent_tod:latest
+        envFrom:
+        - secretRef:
+            name: bking2-nc-latent-tod-deploy-key
+        - secretRef:
+            name: bking2-wandb-api-key-71a5
+        - secretRef:
+            name: bking2-openai-api-key
+        - secretRef:
+            name: bking2-aws-dynamodb
+        resources:
+          limits:
+            memory: 32Gi
+            cpu: "8"
+            nvidia.com/a100: "1"
+          requests:
+            memory: 32Gi
+            cpu: "8"
+            nvidia.com/a100: "1"
+        command: [ "/bin/sh" ]
+        # commmand does the following:
+        # 1) set up the github deployment (SSH) key: we store the relevant secrets as environment variables, because
+        #    injecting them as files makes root the owner, and the container needs to run as non-privileged user. We
+        #    also add githubs public keys to known_hosts to bypass the interactive fingerprint check on later clones
+        # 2) clone repo: this clones the repo into temp, since the folder already exists and contains our venv
+        #    definition that we don't want to overwrite. Then, we move the .git definition into the folder (which had
+        #    none to begin with), and fetch and pull. This doesn't yet overwrite files, we then need to do a hard reset to
+        #    origin/main (assuming this is the branch we are always running jobs from). This step allows us to not re-build
+        #    the docker container for every code change, only those which are important to it.
+        # 3) set environment variables:
+        #    - cache directories for transformers/datasets
+        #    - outputs directory
+        #    - disable tqdm (problems with multiprocessing)
+        # 4) log in the huggingface for private model access and saving
+        # 5) run the actual job: everything after 'job ready to start' is the script we want to run
+        args:
+          - -c
+          - >-
+            mkdir -p /root/.ssh &&
+            echo "$SSH_PRIVATE_KEY" > /root/.ssh/id_rsa &&
+            echo "$SSH_PUBLIC_KEY" > /root/.ssh/id_rsa.pub &&
+            chmod 644 /root/.ssh/id_rsa.pub &&
+            chmod 600 /root/.ssh/id_rsa &&
+            echo "github.com ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEAq2A7hRGmdnm9tUDbO9IDSwBK6TbQa+PXYPCPy6rbTrTtw7PHkccKrpp0yVhp5HdEIcKr6pLlVDBfOLX9QUsyCOV0wzfjIJNlGEYsdlLJizHhbn2mUjvSAHQqZETYP81eFzLQNnPHt4EVVUh7VfDESU84KezmD5QlWpXLmvU31/yMf+Se8xhHTvKSCZIFImWwoG6mbUoWf9nzpIoaSjB+weqqUUmpaaasXVal72J+UX2B+2RPW3RcT0eOzQgqlJL3RKrTJvdsjE3JEAvGq3lGHSZXy28G3skua2SmVi/w4yCE6gbODqnTWlg7+wC604ydGXA8VJiS5ap43JXiUFFAaQ==" >> /root/.ssh/known_hosts &&
+            echo "github.com ecdsa-sha2-nistp256 AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBEmKSENjQEezOmxkZMy7opKgwFB9nkt5YRrYMjNuG5N87uRgg6CLrbo5wAdT/y6v0mKV0U2w0WZ2YB/++Tpockg=" >> /root/.ssh/known_hosts &&
+            echo "github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl" >> /root/.ssh/known_hosts &&
+            cd /root &&
+            rm -rf nc_latent_tod &&
+            git clone -b main git@github.com:kingb12/nc_latent_tod.git &&
+            cd nc_latent_tod &&
+            export TQDM_DISABLE=true && 
+            export NC_LATENT_TOD_OUTPUTS_DIR="/data/users/bking2/nc_latent_tod/outputs" &&
+            export NC_LATENT_TOD_QUEUE_PATH="nc-latent-tod-work-queue.fifo" &&
+            export HF_HOME=/data/users/bking2/.cache/huggingface &&
+            pip install huggingface_hub &&
+            python -c "from huggingface_hub.hf_api import HfFolder; HfFolder.save_token('${HF_API_TOKEN}')" &&
+            echo "job ready to start" &&
+            export REQUIRE_CUDA="true"~ &&
+            conda run --no-capture-output -p /root/venv python src/nc_latent_tod/experiments/poll_for_offline_label_jobs.py &&
+            echo "job finished"
+        volumeMounts:
+        - mountPath: /data/users/bking2
+          name: bking2-central-hf-cache-volume
+      restartPolicy: Never
+      schedulerName: default-scheduler
+      securityContext: {}
+      serviceAccount: default
+      serviceAccountName: default
+      terminationGracePeriodSeconds: 30
+      tolerations:
+      - effect: NoExecute
+        key: node.kubernetes.io/not-ready
+        operator: Exists
+        tolerationSeconds: 300
+      - effect: NoExecute
+        key: node.kubernetes.io/unreachable
+        operator: Exists
+        tolerationSeconds: 300
+      - effect: PreferNoSchedule
+        key: nvidia.com/gpu
+        operator: Exists
+      volumes:
+        - name: bking2-central-hf-cache-volume  
+            # persistentVolumeClaim:
+            #   claimName: bking2-central-hf-cache-volume
+          emptyDir:
+            sizeLimit: 128Gi
+  backoffLimit: 0

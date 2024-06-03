@@ -1,0 +1,85 @@
+{
+    "data": {
+        "eval_set_path_or_name": "Brendan/multiwoz_turns_v22_partitioned",
+        "eval_set_split_name": "train_7100_7150"
+    },
+    "output": {},
+    "wandb": {
+        "run_tags": [
+            "Starcoder Self Label - Mar 26 Re-Label",
+            "E-Step 2"
+        ]
+    },
+    "dst": {
+        "module_type": "dst",
+        "model": {
+            "model_type": "starcoder",
+            "model_name_or_path": "Brendan/tod-zero-bqag3oyb-32000",
+            "stop_sequences": [
+                "\n\n",
+                "#",
+                "]"
+            ],
+            "batch_size": 128,
+            "use_past_key_value_cache": true,
+            "attn_implementation": "flash_attention_2",
+            "torch_dtype": "bfloat16",
+            "load_in_8bit": false
+        },
+        "generation_cfg": {
+            "prompt_mode": "causal_dst",
+            "generation_mode": "noisy_channel_cond",
+            "noisy_channel_prompt_mode": "noisy_channel_dst",
+            "sampling_args": {
+                "top_p": 0.95,
+                "n": 16,
+                "best_of": 16
+            }
+        },
+        "add_predictions_to_index": false
+    },
+    "act_tag": {
+        "module_type": "act_tag",
+        "model": {
+            "model_type": "starcoder",
+            "model_name_or_path": "Brendan/tod-zero-bqag3oyb-32000",
+            "stop_sequences": [
+                "\n\n",
+                "#",
+                "],"
+            ],
+            "batch_size": 128,
+            "use_past_key_value_cache": true,
+            "attn_implementation": "flash_attention_2",
+            "torch_dtype": "bfloat16",
+            "load_in_8bit": false
+        },
+        "generation_cfg": {
+            "prompt_mode": "non_causal_sys_act_resp_only",
+            "generation_mode": "noisy_channel_cond",
+            "noisy_channel_prompt_mode": "non_causal_sys_act_resp_only_noisy_channel",
+            "sampling_args": {
+                "top_p": 0.95,
+                "n": 16,
+                "best_of": 16
+            }
+        }
+    },
+    "create_self_labelled_dataset": false,
+    "publish_labelled_dataset_as": {
+        "path_or_name": "Brendan/starcoder_mar_26_job_0_multiwoz_turns_v22",
+        "split_name": "train",
+        "push_to_hub": false
+    },
+    "profile": false,
+    "manifest": {
+        "type": "dynamo",
+        "manifest_path": "NCLatentTODExperimentsLogManifestTable",
+        "group_id": "second_labelling",
+        "seed_retrievers_from_manifest": false,
+        "write_to_manifest": true,
+        "manifest_must_exist": true,
+        "group_id_must_exist": false
+    },
+    "prompt_generator": "simple_kwargs"
+}

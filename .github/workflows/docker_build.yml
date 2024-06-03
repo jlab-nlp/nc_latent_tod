@@ -1,0 +1,68 @@
+name: build
+
+on:
+  push:
+    # below: trying to avoid builds for changes that don't affect the environment definition, since they are
+    # long-running & my GH Actions usage is limited. The repo is installed in edit mode in the container definition, but
+    # this means the experiment needs to clone the appropriate revision into place before starting, or it risks running
+    # stale code.
+    paths:
+      - 'k8s/Dockerfile'
+      - 'setup.cfg'
+      - 'pyproject.toml'
+      - '.github/workflows/docker_build.yml'
+      - '.github/workflows/docker_build_2.yml'
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    # Have to start with clearing a lot of space, since GH runners have ~16 GB of space and the Docker build with a
+    # pytorch image takes up a lot of space.
+    steps:
+      # https://github.com/orgs/community/discussions/25678#discussioncomment-5242449
+      - name: Delete huge unnecessary tools folder
+        run: |
+          rm -rf /opt/hostedtoolcache
+          cd /opt
+          find . -maxdepth 1 -mindepth 1 '!' -path ./containerd '!' -path ./actionarchivecache '!' -path ./runner '!' -path ./runner-cache -exec rm -rf '{}' ';'
+      # https://github.com/actions/runner/issues/1807
+      - name: Free Up GitHub Actions Ubuntu Runner Disk Space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # This might remove tools that are actually needed, if set to "true" but frees about 6 GB
+          tool-cache: false
+
+          # All of these default to true, but feel free to set to "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+      -
+        name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      -
+        name: Login to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: "kingb12"
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - 
+        name: temp clean stuff
+        # no idea why but my docker build runner keeps running out of space after a few builds if I remove this
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+      -
+        name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          file: k8s/Dockerfile
+          tags: |
+            kingb12/nc_latent_tod:latest

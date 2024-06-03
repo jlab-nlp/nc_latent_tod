@@ -1,0 +1,82 @@
+{
+    "data": {
+        "eval_set_path_or_name": "Brendan/multiwoz_turns_v22",
+        "eval_set_split_name": "test"
+    },
+    "output": {},
+    "wandb": {
+        "run_tags": [
+            "Final Results", "Step 2", "Revised"
+        ]
+    },
+    "dst": {
+        "module_type": "dst",
+        "model": {
+            "model_type": "starcoder",
+            "model_name_or_path": "Brendan/nc-latent-tod-step-2-final",
+            "stop_sequences": [
+                "\n\n",
+                "#",
+                "]"
+            ],
+            "batch_size": 128,
+            "use_past_key_value_cache": true,
+            "attn_implementation": "flash_attention_2",
+            "torch_dtype": "bfloat16",
+            "load_in_8bit": false
+        },
+        "generation_cfg": {
+            "prompt_mode": "causal_dst",
+            "generation_mode": "noisy_channel_cond",
+            "noisy_channel_prompt_mode": "noisy_channel_dst",
+            "sampling_args": {
+                "top_p": 0.95,
+                "n": 16,
+                "best_of": 16
+            }
+        },
+        "add_predictions_to_index": false
+    },
+    "policy": {
+        "module_type": "policy",
+        "model": {
+            "model_type": "starcoder",
+            "model_name_or_path": "Brendan/nc-latent-tod-step-2-final",
+            "stop_sequences": [
+                "\n\n",
+                "#",
+                "],"
+            ],
+            "batch_size": 128,
+            "use_past_key_value_cache": true,
+            "attn_implementation": "flash_attention_2",
+            "torch_dtype": "bfloat16",
+            "load_in_8bit": false
+        },
+        "generation_cfg": {
+          "prompt_mode": "causal_sys_act_policy_from_hist",
+          "generation_mode": "greedy"
+        },
+        "add_predictions_to_index": false
+    },
+    "response_gen": {
+        "module_type": "response_gen",
+        "model": {
+            "model_type": "starcoder",
+            "model_name_or_path": "Brendan/nc-latent-tod-step-2-final",
+            "stop_sequences": ["\""],
+            "batch_size": 128,
+            "use_past_key_value_cache": true,
+            "attn_implementation": "flash_attention_2",
+            "torch_dtype": "bfloat16",
+            "load_in_8bit": false
+        },
+        "generation_cfg": {
+          "prompt_mode": "response_gen_simple",
+          "generation_mode": "greedy"
+        },
+        "add_predictions_to_index": false
+    },
+    "create_self_labelled_dataset": false,
+    "prompt_generator": "simple_kwargs"
+}

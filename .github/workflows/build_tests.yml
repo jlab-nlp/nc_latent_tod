@@ -1,0 +1,61 @@
+# If you want to run this in a fork of this repository, you'll need to add a secret to the Github Repo named
+# `HF_API_TOKEN`, containing an API key to Huggingface. The linked account should visit each of the Starcoder models
+# and accept the terms of use.
+
+name: Python Unit Tests
+
+on:
+  push:
+    branches:
+      - '*'
+    paths:
+      - 'src/**/*'
+      - '.github/workflows/build_tests.yml'
+
+jobs:
+  test:
+    name: Run Python Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-nc-latent-tod-${{ hashFiles('**/setup.cfg') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Generate Cache Key for HF Datasets
+      id: cache-key
+      run: |
+        echo "name=hf_data_key::$(find ~/.cache/huggingface/datasets -name '*.lock' | sort | xargs cat | md5sum | cut -d ' ' -f 1)" >> $GITHUB_ENV
+
+    - name: Cache HuggingFace Datasets
+      uses: actions/cache@v2
+      with:
+        path: ~/.cache/huggingface/datasets
+        key: ${{ runner.os }}-datasets-cache-${{ env.hf_data_key }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.10.13
+
+    - name: Install dependencies
+      run: pip install .
+
+    - name: Run unit tests
+      run: |
+        set -e
+        pip install huggingface_hub &&
+        python -c "from huggingface_hub.hf_api import HfFolder; HfFolder.save_token('${{ secrets.HF_API_TOKEN }}')" &&
+        python src/nc_latent_tod/run_build_unit_tests.py
+    - name: Check test results and fail if tests failed
+      run: |
+        if [ $? -ne 0 ]; then
+          echo "Tests failed. Failing the workflow."
+          exit 1
+        fi

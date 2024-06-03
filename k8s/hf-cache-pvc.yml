@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: bking2-central-hf-cache-volume
+spec:
+  storageClassName: rook-cephfs-central
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 128Gi
