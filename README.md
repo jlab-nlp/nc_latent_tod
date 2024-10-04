@@ -7,7 +7,7 @@ Dialogue with LLMs](https://arxiv.org/pdf/2404.15219.pdf)
 
 ## Installation
 
-1. We provide a Docker image, in which there is a virtual environment at `/root/venv` with all dependencies installed. See [./k8s/Dockerfile](./k8s/Dockerfile) for details.
+1. We provide a [Docker image](https://hub.docker.com/repository/docker/kingb12/nc_latent_tod), in which there is a virtual environment at `/root/venv` with all dependencies installed. See [./k8s/Dockerfile](./k8s/Dockerfile) for details.
 
 2. Alternatively, for a local installation, we use conda:
 
