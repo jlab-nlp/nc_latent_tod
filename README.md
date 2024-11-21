@@ -1,7 +1,6 @@
-# The Power of the Noisy Channel: Unsupervised End-to-End Task-Oriented Dialogue with LLMs
+# Unsupervised End-to-End Task-Oriented Dialogue with LLMs: The Power of the Noisy Channel
 
-This is the code release for the paper: [The Power of the Noisy Channel: Unsupervised End-to-End Task-Oriented
-Dialogue with LLMs](https://arxiv.org/pdf/2404.15219.pdf)
+This is the code release for the paper: [Unsupervised End-to-End Task-Oriented Dialogue with LLMs: The Power of the Noisy Channel](https://aclanthology.org/2024.emnlp-main.473/), at EMNLP 2024!
 
 [Brendan King](https://kingb12.github.io/) and Jeffrey Flanigan.
 
@@ -111,12 +110,20 @@ This method follows the procedure described in sections 4.1-4.4 of [the paper](h
 #### Cite As:
 
 ```bibtex
-@misc{king2024power,
-      title={The Power of the Noisy Channel: Unsupervised End-to-End Task-Oriented Dialogue with LLMs}, 
-      author={Brendan King and Jeffrey Flanigan},
-      year={2024},
-      eprint={2404.15219},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL}
+@inproceedings{king-flanigan-2024-unsupervised,
+    title = "Unsupervised End-to-End Task-Oriented Dialogue with {LLM}s: The Power of the Noisy Channel",
+    author = "King, Brendan  and
+      Flanigan, Jeffrey",
+    editor = "Al-Onaizan, Yaser  and
+      Bansal, Mohit  and
+      Chen, Yun-Nung",
+    booktitle = "Proceedings of the 2024 Conference on Empirical Methods in Natural Language Processing",
+    month = nov,
+    year = "2024",
+    address = "Miami, Florida, USA",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2024.emnlp-main.473",
+    pages = "8283--8300",
+    abstract = "Training task-oriented dialogue systems typically requires turn-level annotations for interacting with their APIs: e.g. a dialogue state and the system actions taken at each step. These annotations can be costly to produce, error-prone, and require both domain and annotation expertise. With advances in LLMs, we hypothesize that unlabeled data and a schema definition are sufficient for building a working task-oriented dialogue system, completely unsupervised. We consider a novel unsupervised setting of only (1) a well-defined API schema (2) a set of unlabeled dialogues between a user and agent. We propose an innovative approach using expectation-maximization (EM) that infers turn-level annotations as latent variables using a noisy channel model to build an end-to-end dialogue agent. Evaluating our approach on the MultiWOZ benchmark, our method more than doubles the dialogue success rate of a strong GPT-3.5 baseline.",
 }
 ```
